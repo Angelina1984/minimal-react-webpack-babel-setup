@@ -12,10 +12,10 @@ pipeline {
             }
         }
 
-        stage('Deploy docker image to EC2') {
+     /*   stage('Deploy docker image to EC2') {
             steps {
                 // sh 'docker run --name minimal-react-webpack-babel-setup -p 4680:443 -d inalopez/minimal-react-webpack-babel-setup'
             }
-        }
+        } */
     }
 }
