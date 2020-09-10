@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 
 # Copies package.json and package-lock.json to Docker environment
 COPY package*.json ./
-#COPY .npmrc ./
+COPY .npmrc ./
 
 # Installs all node packages
 RUN npm install
@@ -17,8 +17,7 @@ RUN npm install
 COPY . .
 
 # Uses port which is used by the actual application
-EXPOSE 8081
+EXPOSE 443
 
 # Finally runs the application
 CMD [ "npm", "start" ]
-#CMD [ "/usr/local/bin/node", "./index.js" ]
