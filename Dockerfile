@@ -21,3 +21,4 @@ EXPOSE 8081
 
 # Finally runs the application
 CMD [ "npm", "start" ]
+#CMD [ "/usr/local/bin/node", "./index.js" ]
