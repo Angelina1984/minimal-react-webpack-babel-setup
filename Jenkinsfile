@@ -1,21 +1,57 @@
+artifactoryHost = "sten-docker.art-bobcat.sten.com"
+buildContainerVersion = "1.0"
+imageName = "team-docker/minimal-react-webpack-babel-setup"
+fullImageName = artifactoryHost + "/" + imageName
+versionedImageName = fullImageName  + ":" + buildContainerVersion
+    
+    
 pipeline {
     agent {
         node {
-            label 'centos'
+            label 'build-internal-use-containers'
         }
     }
     stages {
-        stage('Build Docker') {
+        stage('Build') {
             steps {
-                sh "docker build --pull -f Dockerfile ."
-               // sh 'docker run --name minimal-react-webpack-babel-setup -p 4680:443 -d inalopez/minimal-react-webpack-babel-setup'
+                sh "npm install"
             }
         }
 
-     /*   stage('Deploy docker image to EC2') {
+        stage('Test') {
             steps {
-                // sh 'docker run --name minimal-react-webpack-babel-setup -p 4680:443 -d inalopez/minimal-react-webpack-babel-setup'
+                sh "npm test"
             }
-        } */
+        }
+
+        stage('Build Docker image') {
+            steps {
+                sh "docker build -t ${versionedImageName} ."
+            }
+        }
+
+        stage("Push Docker image") {
+            steps {
+                script {
+                    docker.withRegistry("https://"+ artifactoryHost,'svc_d_artifactory'){
+                      sh """
+                          docker push ${versionedImageName}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Deploy image to AWS') {
+            steps {
+                script {
+                    docker.withRegistry(httpsPrefix + artifactoryHost, 'svc_d_artifactory'){
+                        withAWS(credentials: "aws_vcs_dev_vpc", region: "us-east-1") {
+                            sh './gradlew awsCfnMigrateStack awsCfnWaitStackComplete -PsubnetId=$SUBNET_ID -PdockerHubUsername=$DOCKER_HUB_LOGIN_USR -Pregion=$REGION'
+                        }
+                    }
+                }
+            }
+        }
     }
 }
