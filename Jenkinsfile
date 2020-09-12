@@ -51,7 +51,7 @@ pipeline {
                     withAWS(credentials: "aws_vcs_dev_vpc", region: "us-east-1") {
                         sh """
                             dockerHubUsername=$DOCKER_HUB_LOGIN
-                            ./jenkins/scripts/uploadCloudFormation.sh"
+                            ./jenkins/scripts/uploadCloudFormation.sh
                         """
                        // sh './gradlew awsCfnMigrateStack awsCfnWaitStackComplete
                        // -PsubnetId=$SUBNET_ID -PdockerHubUsername=$DOCKER_HUB_LOGIN_USR -Pregion=$REGION'
