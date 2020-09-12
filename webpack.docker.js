@@ -13,11 +13,8 @@ module.exports = merge.smart(common, {
         https: true,
         open: true,
         overlay: true,
-        port: 443,
+        port: 8080,
         quiet: true
-    },
-    output: {
-        publicPath: 'https://ct-dev.wpe.autodesk.com/mfe'
     },
     mode: 'development',
     devtool: 'eval-source-map',
