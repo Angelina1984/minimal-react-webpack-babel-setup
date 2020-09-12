@@ -42,13 +42,19 @@ pipeline {
             }
         }
 
-        stage('Deploy image to AWS') {
+        stage('Deploy image to AWS') {            
+            environment {
+                DOCKER_HUB_LOGIN = credentials('svc_d_artifactory')
+            }
             steps {
                 script {
-                    docker.withRegistry(httpsPrefix + artifactoryHost, 'svc_d_artifactory'){
-                        withAWS(credentials: "aws_vcs_dev_vpc", region: "us-east-1") {
-                            sh './gradlew awsCfnMigrateStack awsCfnWaitStackComplete -PsubnetId=$SUBNET_ID -PdockerHubUsername=$DOCKER_HUB_LOGIN_USR -Pregion=$REGION'
-                        }
+                    withAWS(credentials: "aws_vcs_dev_vpc", region: "us-east-1") {
+                        sh """
+                            dockerHubUsername=$DOCKER_HUB_LOGIN_USR
+                            ./jenkins/scripts/uploadCloudFormation.sh"
+                        """
+                       // sh './gradlew awsCfnMigrateStack awsCfnWaitStackComplete
+                       // -PsubnetId=$SUBNET_ID -PdockerHubUsername=$DOCKER_HUB_LOGIN_USR -Pregion=$REGION'
                     }
                 }
             }
