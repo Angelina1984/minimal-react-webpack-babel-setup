@@ -1,14 +1,15 @@
-artifactoryHost = "sten-docker.art-bobcat.sten.com"
+artifactoryHost = "https://autodesk-docker.art-bobcat.autodesk.com"
 buildContainerVersion = "1.0"
-imageName = "team-docker/minimal-react-webpack-babel-setup"
+dockerContainerRepoName="team-web-platform-engineering-docker"
+serviceName = "minimal-react-webpack"
+imageName = "${dockerContainerRepoName}/${serviceName}"
 fullImageName = artifactoryHost + "/" + imageName
-versionedImageName = fullImageName  + ":" + buildContainerVersion
     
     
 pipeline {
     agent {
         node {
-            label 'build-internal-use-containers'
+            label 'aws-centos'
         }
     }
     stages {
@@ -24,37 +25,26 @@ pipeline {
             }
         }
 
-        stage('Build Docker image') {
-            steps {
-                sh "docker build -t ${versionedImageName} ."
-            }
-        }
-
-        stage("Push Docker image") {
+        stage("Build and Push Docker image") {
             steps {
                 script {
-                    docker.withRegistry("https://"+ artifactoryHost,'svc_d_artifactory'){
-                      sh """
-                          docker push ${versionedImageName}
-                        """
+                    docker.withRegistry(artifactoryHost, 'svc_d_artifactory'){
+                        def customImage = docker.build("${imageName}:${buildContainerVersion}")
+                        customImage.push()
                     }
                 }
             }
         }
 
-        stage('Deploy image to AWS') {            
-            environment {
-                DOCKER_HUB_LOGIN = credentials('svc_d_artifactory')
-            }
+
+        stage('Deploy image to AWS') {
             steps {
                 script {
-                    withAWS(credentials: "aws_vcs_dev_vpc", region: "us-east-1") {
-                        sh """
-                            dockerHubUsername=$DOCKER_HUB_LOGIN
-                            ./jenkins/scripts/uploadCloudFormation.sh
-                        """
-                       // sh './gradlew awsCfnMigrateStack awsCfnWaitStackComplete
-                       // -PsubnetId=$SUBNET_ID -PdockerHubUsername=$DOCKER_HUB_LOGIN_USR -Pregion=$REGION'
+                    withAWS(credentials: 'aws_wpesvcs_dev', region: 'us-east-1') {
+                        withEnv(["serviceName=${serviceName}","containerVersion=${buildContainerVersion}","subnetID='subnet-123456789'"]) {
+                            sh "ls -la ./jenkins/scripts"
+                            sh "source ./jenkins/scripts/uploadCloudFormation.sh"
+                        }
                     }
                 }
             }
