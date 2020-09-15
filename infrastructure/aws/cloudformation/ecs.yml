@@ -7,8 +7,18 @@ Parameters:
     Type: String
   ServiceVersion:
     Type: String
-  DockerHubUsername:
+  ContainerRegistryRobotCredentials:
     Type: String
+    Description: ARN of Secrets Manager secret for maven account from the art bobcat container registry
+    Default: arn:aws:secretsmanager:us-east-1:123456789:secret:dev/svc_d-tdfrgd
+  ContainerRegistryHost:
+    Description: Base host/path of the container registry
+    Type: String
+    Default: autodesk-docker.art-bobcat.autodesk.com
+  DockerContainerRepoName:
+    Description: Repo for the Docker containers
+    Type: String
+    Default: team-web-platform-engineering-docker
 Resources:
   Cluster:
     Type: AWS::ECS::Cluster
@@ -33,9 +43,9 @@ Resources:
       NetworkMode: awsvpc
       ContainerDefinitions:
         - Name: !Sub ${ServiceName}-container
-          Image: !Sub ${DockerHubUsername}/${ServiceName}:${ServiceVersion}
-          PortMappings:
-            - ContainerPort: 8080
+          Image: !Sub ${ContainerRegistryHost}/${DockerContainerRepoName}/${ServiceName}:${ServiceVersion}
+          RepositoryCredentials:
+            CredentialsParameter: !Ref ContainerRegistryRobotCredentials
       RequiresCompatibilities:
         - EC2
         - FARGATE
